@@ -17,6 +17,8 @@ jobs:
             NODE_ENV: testing
           - DB: mysql
             NODE_ENV: testing-mysql
+          - DB: pg
+            NODE_ENV: testing-pg
     env:
       DB: ${{ matrix.env.DB }}
       NODE_ENV: ${{ matrix.env.NODE_ENV }}
