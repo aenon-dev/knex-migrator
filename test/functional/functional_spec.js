@@ -185,7 +185,7 @@ _.each(['default', 'migrateInit'], function (initMethod) {
                     if (config.get('database:client') === 'sqlite3') {
                         err.code.should.eql('MIGRATION_TABLE_IS_MISSING');
                     } else {
-                        err.code.should.eql('DB_NOT_INITIALISED');
+                        err.code.should.be.equalOneOf('DB_NOT_INITIALISED', '3D000');
                     }
                 });
         });
