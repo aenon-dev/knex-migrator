@@ -39,7 +39,7 @@ function addPrimaryKey(tableName, columns, knex) {
     return knex.schema.table(tableName, function (table) {
         table.primary(columns);
     }).catch((err) => {
-        if (err.code === 'ER_MULTIPLE_PRI_KEY') {
+        if (err.code === 'ER_MULTIPLE_PRI_KEY' || err.code === '42P16') {
             debug(`Primary key constraint for: ${columns} already exists for table: ${tableName}`);
             return;
         }
