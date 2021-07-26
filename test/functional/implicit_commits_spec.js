@@ -3,7 +3,8 @@ const _ = require('lodash'),
     fs = require('fs'),
     config = require('../../config'),
     KnexMigrator = require('../../lib'),
-    testUtils = require('../utils');
+    testUtils = require('../utils'),
+    debug = require('debug')('knex-migrator:index');
 
 let migratorConfigPath,
     migrationPath;
@@ -50,12 +51,21 @@ describe('Implicit Commits', function () {
                         return connection('users');
                     })
                     .then(function (values) {
-                        // mysql table still exists, was not manually rolled back, see assets
+                        // mysql or postgres table still exists, was not manually rolled back, see assets
                         values.length.should.eql(0);
                     })
                     .catch(function (err) {
                         // sqlite doesn't use autocommits inside an explicit transaction
                         err.errno.should.eql(1);
+                    })
+                    .finally(function () {
+                        if (config.get('database:client') === 'pg') {
+                            debug('Destroy connection');
+                            return connection.destroy()
+                                .then(function () {
+                                    debug('Destroyed connection');
+                                });
+                        }
                     });
             });
         });
@@ -102,8 +112,19 @@ describe('Implicit Commits', function () {
                         // table not found
                         if (config.get('database:client') === 'mysql') {
                             err.errno.should.eql(1146);
+                        } else if (config.get('database:client') === 'pg') {
+                            err.code.should.eql('42P01');
                         } else {
                             err.errno.should.eql(1);
+                        }
+                    })
+                    .finally(function () {
+                        if (config.get('database:client') === 'pg') {
+                            debug('Destroy connection');
+                            return connection.destroy()
+                                .then(function () {
+                                    debug('Destroyed connection');
+                                });
                         }
                     });
             });
@@ -147,6 +168,15 @@ describe('Implicit Commits', function () {
                     })
                     .then(function (values) {
                         values.length.should.eql(5);
+                    })
+                    .finally(function () {
+                        if (config.get('database:client') === 'pg') {
+                            debug('Destroy connection');
+                            return connection.destroy()
+                                .then(function () {
+                                    debug('Destroyed connection');
+                                });
+                        }
                     });
             });
         });
@@ -195,7 +225,7 @@ describe('Implicit Commits', function () {
                         throw new Error('Expect error from migrate.');
                     })
                     .catch(function (err) {
-                        if (config.get('database:client') === 'mysql') {
+                        if (config.get('database:client') === 'mysql' || config.get('database:client') === 'pg') {
                             err.message.should.eql('Ooops');
                         } else {
                             // DROP COLUMN does not exist in sqlite
@@ -211,6 +241,8 @@ describe('Implicit Commits', function () {
                         // table not found
                         if (config.get('database:client') === 'mysql') {
                             err.errno.should.eql(1146);
+                        } else if (config.get('database:client') === 'pg') {
+                            err.code.should.eql('42P01');
                         } else {
                             err.errno.should.eql(1);
                         }
@@ -221,10 +253,19 @@ describe('Implicit Commits', function () {
                         // from init
                         values.length.should.eql(1);
 
-                        if (config.get('database:client') === 'mysql') {
+                        if (config.get('database:client') === 'mysql' || config.get('database:client') === 'pg') {
                             Object.prototype.hasOwnProperty.call(values[0], 'country').should.eql(false);
                         } else {
                             Object.prototype.hasOwnProperty.call(values[0], 'country').should.eql(true);
+                        }
+                    })
+                    .finally(function () {
+                        if (config.get('database:client') === 'pg') {
+                            debug('Destroy connection');
+                            return connection.destroy()
+                                .then(function () {
+                                    debug('Destroyed connection');
+                                });
                         }
                     });
             });
@@ -273,6 +314,15 @@ describe('Implicit Commits', function () {
                     })
                     .then(function (values) {
                         values.length.should.eql(1);
+                    })
+                    .finally(function () {
+                        if (config.get('database:client') === 'pg') {
+                            debug('Destroy connection');
+                            return connection.destroy()
+                                .then(function () {
+                                    debug('Destroyed connection');
+                                });
+                        }
                     });
             });
         });
